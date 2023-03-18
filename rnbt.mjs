@@ -133,7 +133,6 @@ for(let type of [TAG_Byte, TAG_Short, TAG_Int, TAG_Float, TAG_Double]){
     };
 }
 encoders[TAG_Long] = function(nbt){
-    console.log(nbt);
     return colors.type(typenames[TAG_Long]) + " " + colors.number((nbt.value+""));
 };
 
