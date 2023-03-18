@@ -24,6 +24,13 @@ import {
     getType
 } from "nbt.js";
 
+const numberConstructors = [];
+numberConstructors[TAG_Byte] = NBT_Byte;
+numberConstructors[TAG_Short] = NBT_Short;
+numberConstructors[TAG_Int] = NBT_Int;
+numberConstructors[TAG_Long] = NBT_Long;
+numberConstructors[TAG_Float] = NBT_Float;
+numberConstructors[TAG_Double] = NBT_Double;
 
 const isEmpty = function(obj){
     for(let ket in obj){
@@ -201,13 +208,269 @@ encoders[TAG_Long_Array] = function(nbt){
     return `i64 ${JSON.stringify([...nbt])}`;
 };
 
-export const encodeRNBT = function(nbt/*:nbtobject*/, _format = false, indent = 2, colorize = true){
+export const encodeRNBT = function(nbt/*:nbtobject*/, _format = true, indent = 2, colorize = false){
     colors.colorize = colorize;
     format.format = _format;
     format.indent = indent;
     return encoders[getType(nbt)](nbt,0);
 };
 
+
+//decoder
+const typenameMap = new Map;
+for(let type = TAG_Byte; type <= TAG_Double; type++){
+    typenameMap.set(typenames[type],type);
+}
+
+const skipSpaces = function(str){
+    return str.slice(str.match(/^\s*/)[0].length);
+};
+
+const parseCompound = function(str){
+    str = str.slice(1);// skip "{"
+    str = skipSpaces(str);
+    const res = {};
+    if(str[0] === "}"){
+        str = str.slice(1);
+        str = skipSpaces(str);
+        return [res,str];
+    }
+    while(true){
+        if(str.length === 0)
+            throw new Error("Unexpected end of input");
+        let key;
+        if(str[0] === "\""){
+            [key,str] = parseString(str);
+        }else{
+            key = str.match(/[A-Za-z_][A-Za-z0-9_]*/)[0];
+            if(key.length === 0){
+                throw new Error(`Expected a key, but got ${str[0]} instead.`);
+            }
+            str = str.slice(key.length);
+            str = skipSpaces(str);
+        }
+        if(str.length === 0)
+            throw new Error("Unexpected end of input");
+        if(str[0] !== ":")
+            throw new Error(`Expected ":", but got "${str[0]}" instead.`);
+        str = str.slice(1);
+        if(str.length === 0)
+            throw new Error("Unexpected end of input");
+        let val;
+        [val,str] = parseRNBT(str);
+        res[key] = val;
+        if(str.length === 0)
+            throw new Error("Unexpected end of input");
+        if(str[0] === "}"){
+            str = str.slice(1);
+            str = skipSpaces(str);
+            break;
+        }else if(str[0] === ","){
+            str = str.slice(1);
+            str = skipSpaces(str);
+            continue;
+        }else{
+            throw new Error(`Unexpected token ${str[0]} in a compound tag`);
+        }
+    }
+    return [res,str];
+};
+
+const parseList = function(str){
+    str = str.slice(1);// skip "["
+    str = skipSpaces(str);
+    const res = [];
+    if(str[0] === "]"){
+        str = str.slice(1);
+        str = skipSpaces(str);
+        return [res,str];
+    }
+    while(true){
+        if(str.length === 0)
+            throw new Error("Unexpected end of input");
+        let val;
+        [val,str] = parseRNBT(str);
+        res.push(val);
+        if(str.length === 0)
+            throw new Error("Unexpected end of input");
+        if(str[0] === "]"){
+            str = str.slice(1);
+            str = skipSpaces(str);
+            break;
+        }else if(str[0] === ","){
+            str = str.slice(1);
+            str = skipSpaces(str);
+            continue;
+        }else{
+            throw new Error(`Unexpected token ${str[0]} in a list`);
+        }
+    }
+    return [res,str];
+};
+
+const parseString = function(str){
+    let res = "";
+    let i = 1;// skip "\""
+    for(; i < str.length; i++){
+        if(i ===str.length)
+            throw new Error("Unclosed string at the end of file");
+        if(str[i] === "\\"){
+            i++;
+            if(i === str.length)
+                throw new Error("Unclosed string at the end of file");
+            res += "\\"+str[i];
+        }else if(str[i] === "\""){
+            i++;
+            break;
+        }else{
+            res += str[i];
+        }
+    }
+    str = str.slice(i);
+    str = skipSpaces(str);
+    // JSON.parse handles all the escape sequences like "\u001a"
+    return [JSON.parse("\""+res+"\""),str];
+};
+
+
+const parseNumberAsString = function(str){
+    const res = str.match(/^[0-9\.\+\-eE]+/)[0];
+    str = str.slice(res.length);
+    str = skipSpaces(str);
+    return [res,str];
+};
+
+const parseNumber = function(str,type){
+    let val;
+    [val,str] = parseNumberAsString(str);
+    let num;
+    if(type === TAG_Long){
+        num = BigInt(val);
+    }else if(type === TAG_Float || type === TAG_Double){
+        num = parseFloat(val);
+    }else{
+        num = parseInt(val);
+    }
+    const res = new numberConstructors[type](num);
+    return [res,str];
+};
+
+const parseNumberArray = function(str){
+    str = str.slice(1);
+    str = skipSpaces(str);
+    const res = [];
+    if(str[0] === "]"){
+        str = str.slice(1);
+        str = skipSpaces(str);
+        return [res,str];
+    }
+    while(true){
+        if(str.length === 0)
+            throw new Error("Unexpected end of input");
+        let val;
+        [val,str] = parseNumberAsString(str);
+        res.push(val);
+        if(str.length === 0)
+            throw new Error("Unexpected end of input");
+        if(str[0] === "]"){
+            str = str.slice(1);
+            str = skipSpaces(str);
+            break;
+        }else if(str[0] === ","){
+            str = str.slice(1);
+            str = skipSpaces(str);
+            continue;
+        }else{
+            throw new Error(`Unexpected token ${str[0]} in a typed array`);
+        }
+    }
+    return [res,str];
+};
+
+const parseByteArray = function(str){
+    let arr;
+    [arr,str] = parseNumberArray(str);
+    const res = new Int8Array(arr.length);
+    for(let i = 0; i < arr.length; i++){
+        res[i] = parseInt(arr[i]);
+    }
+    return [res,str];
+};
+
+const parseIntArray = function(str){
+    let arr;
+    [arr,str] = parseNumberArray(str);
+    const res = new Int32Array(arr.length);
+    for(let i = 0; i < arr.length; i++){
+        res[i] = parseInt(arr[i]);
+    }
+    return [res,str];
+};
+
+const parseLongArray = function(str){
+    let arr;
+    [arr,str] = parseNumberArray(str);
+    const res = new BigInt64Array(arr.length);
+    for(let i = 0; i < arr.length; i++){
+        res[i] = BigInt(arr[i]);
+    }
+    return [res,str];
+};
+
+
+const parseRNBT = function(str){// str contains sliced string
+    if(str.length === 0)
+        throw new Error("Unexpected end of input");
+    str = skipSpaces(str);
+    if(str[0] === "{")
+        return parseCompound(str);
+    if(str[0] === "[")
+        return parseList(str);
+    if(str[0] === "\"")
+        return parseString(str);
+    
+    // Extract the typename
+    const typename = str.match(/^[^\s]+/)[0];
+    if(!typename){
+        if(str.length !== 0){
+            // Shouldn't happen, but just in case
+            throw new Error(`Expected typename, but got ${str[0]} instead.`);
+        }else{
+            throw new Error("Unexpected end of input");
+        }
+    }
+    if(!typenameMap.has(typename))
+        throw new Error(`Expected a valid typename, but got ${typename.slice(0,10)} instead.`);
+    str = str.slice(typename.length);
+    str = skipSpaces(str);
+    if(str.length === 0)
+        throw new Error("Unexpected end of input");
+    if(str[0] === "["){
+        if(typename === typenames[TAG_Byte_Array])
+            return parseByteArray(str);
+        if(typename === typenames[TAG_Int_Array])
+            return parseIntArray(str);
+        if(typename === typenames[TAG_Long_Array])
+            return parseLongArray(str);
+        throw new Error(`${typename} typed array is not supported by NBT.`);
+    }
+    // It's a plain old number
+    return parseNumber(str,typenameMap.get(typename));
+};
+
+export const decodeRNBT = function(str)/*:nbtobject*/{
+    str = skipSpaces(str);
+    let res;
+    [res,str] = parseRNBT(str);
+    if(str.length !== 0){
+        if(str.length <= 50){
+            throw new Error("Remaining input stream: ${str.slice(0,50)}");
+        }else{
+            throw new Error("Remaining input stream: ${str.slice(0,50)}...");
+        }
+    }
+    return res;
+};
 
 
 
