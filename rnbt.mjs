@@ -13,16 +13,20 @@ import {
     TAG_Compound,
     TAG_Int_Array,
     TAG_Long_Array,
-//types
+// types
     NBT_Byte,
     NBT_Short,
     NBT_Int,
     NBT_Long,
     NBT_Float,
     NBT_Double,
-//funcs
+// funcs
     getType
 } from "nbt.js";
+
+
+
+// Global objects
 
 const numberConstructors = [];
 numberConstructors[TAG_Byte] = NBT_Byte;
@@ -31,6 +35,76 @@ numberConstructors[TAG_Int] = NBT_Int;
 numberConstructors[TAG_Long] = NBT_Long;
 numberConstructors[TAG_Float] = NBT_Float;
 numberConstructors[TAG_Double] = NBT_Double;
+
+const typenames = [];
+typenames[TAG_End] = "null";
+typenames[TAG_Byte] = "i8";
+typenames[TAG_Short] = "i16";
+typenames[TAG_Int] = "i32";
+typenames[TAG_Long] = "i64";
+typenames[TAG_Float] = "f32";
+typenames[TAG_Double] = "f64";
+typenames[TAG_Byte_Array] = "i8";
+typenames[TAG_String] = "";
+typenames[TAG_List] = "";
+typenames[TAG_Compound] = "";
+typenames[TAG_Int_Array] = "i32";
+typenames[TAG_Long_Array] = "i64";
+
+const typenameMap = new Map;
+for(let type = TAG_Byte; type <= TAG_Double; type++){
+    typenameMap.set(typenames[type],type);
+}
+
+const _colors = {
+    black: "\u001b[30m",
+    red: "\u001b[31m",
+    green: "\u001b[32m",
+    yellow: "\u001b[33m",
+    blue: "\u001b[34m",
+    magenta: "\u001b[35m",
+    cyan: "\u001b[36m",
+    white: "\u001b[37m",
+    reset: "\u001b[0m",
+    _black: "\u001b[30;1m",
+    _red: "\u001b[31;1m",
+    _green: "\u001b[32;1m",
+    _yellow: "\u001b[33;1m",
+    _blue: "\u001b[34;1m",
+    _magenta: "\u001b[35;1m",
+    _cyan: "\u001b[36;1m",
+    _white: "\u001b[37;1m",
+    reset: "\u001b[0m"
+};
+
+
+
+// Global singletons with mutable states
+
+const colors = {
+    number: function(str){
+        if(!this.colorize)return str;
+        return _colors.yellow + str + _colors.reset;
+    },
+    string: function(str){
+        if(!this.colorize)return str;
+        return _colors.green + str + _colors.reset;
+    },
+    type: function(str){
+        if(!this.colorize)return str;
+        return _colors.red + str + _colors.reset;
+    },
+    colorize: false
+};
+
+const format = {
+    format:false,
+    indent:2
+};
+
+
+
+// Util functions
 
 const isEmpty = function(obj){
     for(let ket in obj){
@@ -66,72 +140,13 @@ const keyToString = function(key){
     }
 };
 
-
-
-const typenames = [];
-typenames[TAG_End] = "null";
-typenames[TAG_Byte] = "i8";
-typenames[TAG_Short] = "i16";
-typenames[TAG_Int] = "i32";
-typenames[TAG_Long] = "i64";
-typenames[TAG_Float] = "f32";
-typenames[TAG_Double] = "f64";
-typenames[TAG_Byte_Array] = "i8";
-typenames[TAG_String] = "";
-typenames[TAG_List] = "";
-typenames[TAG_Compound] = "";
-typenames[TAG_Int_Array] = "i32";
-typenames[TAG_Long_Array] = "i64";
-
-const getTypeName = function(type,{highlight}){
-    if(!highlight)return typenames[type];
-    return colors.type+typenames[type]+colors.reset;
+const skipSpaces = function(str){
+    return str.slice(str.match(/^\s*/)[0].length);
 };
 
 
-const _colors = {
-    black: "\u001b[30m",
-    red: "\u001b[31m",
-    green: "\u001b[32m",
-    yellow: "\u001b[33m",
-    blue: "\u001b[34m",
-    magenta: "\u001b[35m",
-    cyan: "\u001b[36m",
-    white: "\u001b[37m",
-    reset: "\u001b[0m",
-    _black: "\u001b[30;1m",
-    _red: "\u001b[31;1m",
-    _green: "\u001b[32;1m",
-    _yellow: "\u001b[33;1m",
-    _blue: "\u001b[34;1m",
-    _magenta: "\u001b[35;1m",
-    _cyan: "\u001b[36;1m",
-    _white: "\u001b[37;1m",
-    reset: "\u001b[0m"
-};
 
-
-//global singletons
-const colors = {
-    number: function(str){
-        if(!this.colorize)return str;
-        return _colors.yellow + str + _colors.reset;
-    },
-    string: function(str){
-        if(!this.colorize)return str;
-        return _colors.green + str + _colors.reset;
-    },
-    type: function(str){
-        if(!this.colorize)return str;
-        return _colors.red + str + _colors.reset;
-    },
-    colorize: false
-};
-
-const format = {
-    format:false,
-    indent:2
-};
+// Encoder
 
 const encoders = [];
 for(let type of [TAG_Byte, TAG_Short, TAG_Int, TAG_Float, TAG_Double]){
@@ -139,6 +154,7 @@ for(let type of [TAG_Byte, TAG_Short, TAG_Int, TAG_Float, TAG_Double]){
         return colors.type(typenames[type]) + " " + colors.number(nbt.value);
     };
 }
+
 encoders[TAG_Long] = function(nbt){
     return colors.type(typenames[TAG_Long]) + " " + colors.number((nbt.value+""));
 };
@@ -146,9 +162,11 @@ encoders[TAG_Long] = function(nbt){
 encoders[TAG_Byte_Array] = function(nbt){
     return colors.type(typenames[TAG_Byte_Array]) + " " + colors.number(JSON.stringify([...nbt]));
 };
+
 encoders[TAG_String] = function(nbt){
     return colors.string(JSON.stringify(nbt));
 };
+
 encoders[TAG_List] = function(nbt, depth){
     if(nbt.length === 0){
         return "[]";
@@ -173,6 +191,7 @@ encoders[TAG_List] = function(nbt, depth){
     res += `${indentStr}]`;
     return res;
 };
+
 encoders[TAG_Compound] = function(nbt, depth){
     if(isEmpty(nbt)){
         return "{}";
@@ -201,9 +220,11 @@ encoders[TAG_Compound] = function(nbt, depth){
     res += `}`;
     return res;
 };
+
 encoders[TAG_Int_Array] = function(nbt){
     return `i32 ${JSON.stringify([...nbt])}`;
 };
+
 encoders[TAG_Long_Array] = function(nbt){
     return `i64 ${JSON.stringify([...nbt])}`;
 };
@@ -216,15 +237,8 @@ export const encodeRNBT = function(nbt/*:nbtobject*/, _format = true, indent = 2
 };
 
 
-//decoder
-const typenameMap = new Map;
-for(let type = TAG_Byte; type <= TAG_Double; type++){
-    typenameMap.set(typenames[type],type);
-}
 
-const skipSpaces = function(str){
-    return str.slice(str.match(/^\s*/)[0].length);
-};
+// Decoder
 
 const parseCompound = function(str){
     str = str.slice(1);// skip "{"
@@ -331,7 +345,6 @@ const parseString = function(str){
     // JSON.parse handles all the escape sequences like "\u001a"
     return [JSON.parse("\""+res+"\""),str];
 };
-
 
 const parseNumberAsString = function(str){
     const res = str.match(/^[0-9\.\+\-eE]+/)[0];
