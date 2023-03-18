@@ -2,7 +2,7 @@
   "name": "tornbt-dir",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,5 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "nbt.js": "github:martian17/nbt.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.2"
   }
 }
