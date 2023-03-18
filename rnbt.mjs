@@ -43,10 +43,11 @@ const repeatstr = function(str,n){
 const getIndent = (()=>{
     const cache = new Map;
     return function(n){
-        if(!cache.has(n)){
-            cache.set(n,repeatstr(" ",n));
+        if(!format.format)return "";
+        if(!cache.has(n*format.indent)){
+            cache.set(n*format.indent,repeatstr(" ",n));
         }
-        return cache.get(n);
+        return cache.get(n*format.indent);
     }
 })();
 
@@ -102,18 +103,28 @@ const _colors = {
     reset: "\u001b[0m"
 };
 
+
+//global singletons
 const colors = {
-    number: (str)=>{
+    number: function(str){
+        if(!this.colorize)return str;
         return _colors.yellow + str + _colors.reset;
     },
-    string: (str)=>{
+    string: function(str){
+        if(!this.colorize)return str;
         return _colors.green + str + _colors.reset;
     },
-    type: (str)=>{
+    type: function(str){
+        if(!this.colorize)return str;
         return _colors.red + str + _colors.reset;
-    }
+    },
+    colorize: false
 };
 
+const format = {
+    format:false,
+    indent:2
+};
 
 const encoders = [];
 for(let type of [TAG_Byte, TAG_Short, TAG_Int, TAG_Float, TAG_Double]){
@@ -132,13 +143,13 @@ encoders[TAG_Byte_Array] = function(nbt){
 encoders[TAG_String] = function(nbt){
     return colors.string(JSON.stringify(nbt));
 };
-encoders[TAG_List] = function(nbt, indent, depth){
+encoders[TAG_List] = function(nbt, depth){
     if(nbt.length === 0){
         return "[]";
     }
     const type = getType(nbt[0]);
-    const indentStr1 = getIndent(indent*(depth+1));
-    const indentStr = getIndent(indent*depth);
+    const indentStr1 = getIndent(depth+1);
+    const indentStr = getIndent(depth);
     let res = "[\n";
     let first = true;
     for(let item of nbt){
@@ -148,17 +159,17 @@ encoders[TAG_List] = function(nbt, indent, depth){
             res += ",\n";
         }
         res += indentStr1;
-        res += encoders[type](item, indent, depth+1);
+        res += encoders[type](item, depth+1);
     }
     res += `\n${indentStr}]`;
     return res;
 };
-encoders[TAG_Compound] = function(nbt, indent, depth){
+encoders[TAG_Compound] = function(nbt, depth){
     if(isEmpty(nbt)){
         return "{}";
     }
-    const indentStr1 = getIndent(indent*(depth+1));
-    const indentStr = getIndent(indent*depth);
+    const indentStr1 = getIndent(depth+1);
+    const indentStr = getIndent(depth);
     let res = "{\n";
     let first = true;
     for(let key in nbt){
@@ -171,22 +182,25 @@ encoders[TAG_Compound] = function(nbt, indent, depth){
         res += keyToString(key)+": ";
         const item = nbt[key];
         const type = getType(item);
-        res += encoders[type](item, indent, depth+1);
+        res += encoders[type](item, depth+1);
     }
     res += "\n";
     res += indentStr;
     res += `}`;
     return res;
 };
-encoders[TAG_Int_Array] = function(nbt, indent, depth){
+encoders[TAG_Int_Array] = function(nbt){
     return `i32 ${JSON.stringify([...nbt])}`;
 };
-encoders[TAG_Long_Array] = function(nbt, indent, depth){
+encoders[TAG_Long_Array] = function(nbt){
     return `i64 ${JSON.stringify([...nbt])}`;
 };
 
-export const encodeRNBT = function(nbt/*:nbtobject*/,nl=true,indent=2){
-    return encoders[getType(nbt)](nbt,indent,0);
+export const encodeRNBT = function(nbt/*:nbtobject*/, _format = true, indent = 2, colorize = false){
+    colors.colorize = colorize;
+    format.format = _format;
+    format.indent = indent;
+    return encoders[getType(nbt)](nbt,0);
 };
 
 
