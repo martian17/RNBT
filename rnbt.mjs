@@ -91,96 +91,118 @@ typenames[TAG_Compound] = "";
 typenames[TAG_Int_Array] = "i32";
 typenames[TAG_Long_Array] = "i64";
 
+const getTypeName = function(type,{highlight}){
+    if(!highlight)return typenames[type];
+    return colors.type+typenames[type]+colors.reset;
+};
+
+
+const _colors = {
+    black: "\u001b[30m",
+    red: "\u001b[31m",
+    green: "\u001b[32m",
+    yellow: "\u001b[33m",
+    blue: "\u001b[34m",
+    magenta: "\u001b[35m",
+    cyan: "\u001b[36m",
+    white: "\u001b[37m",
+    reset: "\u001b[0m",
+    _black: "\u001b[30;1m",
+    _red: "\u001b[31;1m",
+    _green: "\u001b[32;1m",
+    _yellow: "\u001b[33;1m",
+    _blue: "\u001b[34;1m",
+    _magenta: "\u001b[35;1m",
+    _cyan: "\u001b[36;1m",
+    _white: "\u001b[37;1m",
+    reset: "\u001b[0m"
+};
+
+const colors = {
+    number: (str)=>{
+        return _colors.yellow + str + _colors.reset;
+    },
+    string: (str)=>{
+        return _colors.green + str + _colors.reset;
+    },
+    type: (str)=>{
+        return _colors.red + str + _colors.reset;
+    }
+};
+
+
 const encoders = [];
 for(let type of [TAG_Byte, TAG_Short, TAG_Int, TAG_Float, TAG_Double]){
-    encoders[type] = function(strb, nbt, indent, depth){
-        strb.push(`${typenames[type]} ${nbt.value}`);
+    encoders[type] = function(nbt){
+        return colors.type(typenames[type]) + " " + colors.number(nbt.value);
     };
 }
+encoders[TAG_Long] = function(nbt){
+    console.log(nbt);
+    return colors.type(typenames[TAG_Long]) + " " + colors.number((nbt.value+""));
+};
 
-/*encoders[TAG_Byte] = function(strb, nbt, indent, depth){
-    strb.push(`${typenames[TAG_Byte]} ${nbt.value}`);
+encoders[TAG_Byte_Array] = function(nbt){
+    return colors.type(typenames[TAG_Byte_Array]) + " " + colors.number(JSON.stringify([...nbt]));
 };
-encoders[TAG_Short] = function(strb, nbt, indent, depth){
-    strb.push(`${typenames[TAG_Short]} ${nbt.value}`);
+encoders[TAG_String] = function(nbt){
+    return colors.string(JSON.stringify(nbt));
 };
-encoders[TAG_Int] = function(strb, nbt, indent, depth){
-    strb.push(`${typenames[TAG_Int]} ${nbt.value}`);
-};*/
-encoders[TAG_Long] = function(strb, nbt, indent, depth){
-    strb.push(`${typenames[TAG_Long]} ${nbt.value}`);
-};
-/*encoders[TAG_Float] = function(strb, nbt, indent, depth){
-    strb.push(`${typenames[TAG_Float]} ${nbt.value}`);
-};
-encoders[TAG_Double] = function(strb, nbt, indent, depth){
-    strb.push(`${typenames[TAG_Double]} ${nbt.value}`);
-};*/
-encoders[TAG_Byte_Array] = function(strb, nbt, indent, depth){
-    strb.push(`${typenames[TAG_Byte_Array]} ${JSON.stringify([...nbt])}`);
-};
-encoders[TAG_String] = function(strb, nbt, indent, depth){
-    strb.push(JSON.stringify(nbt));
-};
-encoders[TAG_List] = function(strb, nbt, indent, depth){
+encoders[TAG_List] = function(nbt, indent, depth){
     if(nbt.length === 0){
-        strb.push(`[]`);
-        return;
+        return "[]";
     }
     const type = getType(nbt[0]);
     const indentStr1 = getIndent(indent*(depth+1));
     const indentStr = getIndent(indent*depth);
-    strb.push(`[\n`);
+    let res = "[\n";
     let first = true;
     for(let item of nbt){
         if(first){
             first = false;
         }else{
-            strb.push(`,\n`);
+            res += ",\n";
         }
-        strb.push(indentStr1);
-        encoders[type](strb, item, indent, depth+1);
+        res += indentStr1;
+        res += encoders[type](item, indent, depth+1);
     }
-    strb.push(`\n`);
-    strb.push(indentStr);
-    strb.push(`]`);
+    res += `\n${indentStr}]`;
+    return res;
 };
-encoders[TAG_Compound] = function(strb, nbt, indent, depth){
+encoders[TAG_Compound] = function(nbt, indent, depth){
     if(isEmpty(nbt)){
-        strb.push(`{}`);
-        return;
+        return "{}";
     }
     const indentStr1 = getIndent(indent*(depth+1));
     const indentStr = getIndent(indent*depth);
-    strb.push(`{\n`);
+    let res = "{\n";
     let first = true;
     for(let key in nbt){
         if(first){
             first = false;
         }else{
-            strb.push(`,\n`);
+            res += ",\n";
         }
-        strb.push(indentStr1);
-        strb.push(`${keyToString(key)}: `);
+        res += indentStr1;
+        res += keyToString(key)+": ";
         const item = nbt[key];
         const type = getType(item);
-        encoders[type](strb, item, indent, depth+1);
+        res += encoders[type](item, indent, depth+1);
     }
-    strb.push(`\n`);
-    strb.push(indentStr);
-    strb.push(`}`);
+    res += "\n";
+    res += indentStr;
+    res += `}`;
+    return res;
 };
-encoders[TAG_Int_Array] = function(strb, nbt, indent, depth){
-    strb.push(`i32 ${JSON.stringify([...nbt])}`);
+encoders[TAG_Int_Array] = function(nbt, indent, depth){
+    return `i32 ${JSON.stringify([...nbt])}`;
 };
-encoders[TAG_Long_Array] = function(strb, nbt, indent, depth){
-    strb.push(`i64 ${JSON.stringify([...nbt])}`);
+encoders[TAG_Long_Array] = function(nbt, indent, depth){
+    return `i64 ${JSON.stringify([...nbt])}`;
 };
 
-export const encodeRNBT = function(nbt/*:nbtobject*/,nl=true,indent=4){
-    const strb = [];
-    encoders[getType(nbt)](strb,nbt,indent,0);
-    return strb.join("");
+export const encodeRNBT = function(nbt/*:nbtobject*/,nl=true,indent=2){
+    return encoders[getType(nbt)](nbt,indent,0);
 };
 
 
