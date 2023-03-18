@@ -1,0 +1,23 @@
+lockfileVersion: 5.4
+
+specifiers:
+  nbt.js: github:martian17/nbt.js
+
+dependencies:
+  nbt.js: github.com/martian17/nbt.js/c35c67f7ed069f8e34cb595a81df61065e031929
+
+packages:
+
+  github.com/martian17/buffer-builder.js/68ca9fee79178346022d05f478bc8d733cf46a38:
+    resolution: {tarball: https://codeload.github.com/martian17/buffer-builder.js/tar.gz/68ca9fee79178346022d05f478bc8d733cf46a38}
+    name: buffer-builder.js
+    version: 1.0.0
+    dev: false
+
+  github.com/martian17/nbt.js/c35c67f7ed069f8e34cb595a81df61065e031929:
+    resolution: {tarball: https://codeload.github.com/martian17/nbt.js/tar.gz/c35c67f7ed069f8e34cb595a81df61065e031929}
+    name: nbt.js
+    version: 1.0.0
+    dependencies:
+      buffer-builder.js: github.com/martian17/buffer-builder.js/68ca9fee79178346022d05f478bc8d733cf46a38
+    dev: false
