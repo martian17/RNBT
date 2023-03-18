@@ -149,18 +149,21 @@ encoders[TAG_List] = function(nbt, depth){
     const type = getType(nbt[0]);
     const indentStr1 = getIndent(depth+1);
     const indentStr = getIndent(depth);
-    let res = "[\n";
+    let res = "[";
+    if(format.format)res += "\n";
     let first = true;
     for(let item of nbt){
         if(first){
             first = false;
         }else{
-            res += ",\n";
+            res += ",";
+            if(format.format)res += "\n";
         }
         res += indentStr1;
         res += encoders[type](item, depth+1);
     }
-    res += `\n${indentStr}]`;
+    if(format.format)res += "\n";
+    res += `${indentStr}]`;
     return res;
 };
 encoders[TAG_Compound] = function(nbt, depth){
@@ -169,21 +172,24 @@ encoders[TAG_Compound] = function(nbt, depth){
     }
     const indentStr1 = getIndent(depth+1);
     const indentStr = getIndent(depth);
-    let res = "{\n";
+    let res = "{";
+    if(format.format)res += "\n";
     let first = true;
     for(let key in nbt){
         if(first){
             first = false;
         }else{
-            res += ",\n";
+            res += ",";
+            if(format.format)res += "\n";
         }
         res += indentStr1;
-        res += keyToString(key)+": ";
+        res += keyToString(key)+":";
+        if(format.format)res += " ";
         const item = nbt[key];
         const type = getType(item);
         res += encoders[type](item, depth+1);
     }
-    res += "\n";
+    if(format.format)res += "\n";
     res += indentStr;
     res += `}`;
     return res;
@@ -195,7 +201,7 @@ encoders[TAG_Long_Array] = function(nbt){
     return `i64 ${JSON.stringify([...nbt])}`;
 };
 
-export const encodeRNBT = function(nbt/*:nbtobject*/, _format = true, indent = 2, colorize = false){
+export const encodeRNBT = function(nbt/*:nbtobject*/, _format = false, indent = 2, colorize = true){
     colors.colorize = colorize;
     format.format = _format;
     format.indent = indent;
