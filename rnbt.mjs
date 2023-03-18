@@ -24,6 +24,13 @@ import {
     getType
 } from "nbt.js";
 
+import {
+    obj_isEmpty,
+    escapeObjectKey,
+    getIndent,
+    skipSpaces
+} from "./util.mjs";
+
 
 
 // Global objects
@@ -104,45 +111,6 @@ const format = {
 
 
 
-// Util functions
-
-const isEmpty = function(obj){
-    for(let ket in obj){
-        return false;
-    }
-    return true;
-};
-
-const repeatstr = function(str,n){
-    let ret = "";
-    for(let i = 0; i < n; i++){
-        ret += str;
-    }
-    return ret;
-};
-
-const getIndent = (()=>{
-    const cache = new Map;
-    return function(n){
-        if(!format.format)return "";
-        if(!cache.has(n*format.indent)){
-            cache.set(n*format.indent,repeatstr(" ",n));
-        }
-        return cache.get(n*format.indent);
-    }
-})();
-
-const keyToString = function(key){
-    if(key.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/)){
-        return key;
-    }else{
-        return JSON.stringify(key);
-    }
-};
-
-const skipSpaces = function(str){
-    return str.slice(str.match(/^\s*/)[0].length);
-};
 
 
 
@@ -193,7 +161,7 @@ encoders[TAG_List] = function(nbt, depth){
 };
 
 encoders[TAG_Compound] = function(nbt, depth){
-    if(isEmpty(nbt)){
+    if(obj_isEmpty(nbt)){
         return "{}";
     }
     const indentStr1 = getIndent(depth+1);
@@ -209,7 +177,7 @@ encoders[TAG_Compound] = function(nbt, depth){
             if(format.format)res += "\n";
         }
         res += indentStr1;
-        res += keyToString(key)+":";
+        res += escapeObjectKey(key)+":";
         if(format.format)res += " ";
         const item = nbt[key];
         const type = getType(item);
