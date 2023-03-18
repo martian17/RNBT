@@ -4,7 +4,7 @@ specifiers:
   nbt.js: github:martian17/nbt.js
 
 dependencies:
-  nbt.js: github.com/martian17/nbt.js/c35c67f7ed069f8e34cb595a81df61065e031929
+  nbt.js: github.com/martian17/nbt.js/9d995ed0f9427f537d63e6b4f559eb421e078d48
 
 packages:
 
@@ -14,8 +14,8 @@ packages:
     version: 1.0.0
     dev: false
 
-  github.com/martian17/nbt.js/c35c67f7ed069f8e34cb595a81df61065e031929:
-    resolution: {tarball: https://codeload.github.com/martian17/nbt.js/tar.gz/c35c67f7ed069f8e34cb595a81df61065e031929}
+  github.com/martian17/nbt.js/9d995ed0f9427f537d63e6b4f559eb421e078d48:
+    resolution: {tarball: https://codeload.github.com/martian17/nbt.js/tar.gz/9d995ed0f9427f537d63e6b4f559eb421e078d48}
     name: nbt.js
     version: 1.0.0
     dependencies:
