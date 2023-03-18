@@ -48,22 +48,6 @@ const getIndent = (()=>{
         }
         return cache.get(n);
     }
-    /*
-    const caches = [];
-    return function(span,level){
-        if(caches.length <= span){
-            for(let i = caches.length; i <= span; i++){
-                caches.push([]);
-            }
-        }
-        const cache = caches[span];
-        if(cache.length <= level){
-            for(let i = cache.length; i <= level; i++){
-                cache.push(repeatstr(" ",span*level));
-            }
-        }
-        return cache[span][level];
-    }*/
 })();
 
 const keyToString = function(key){
