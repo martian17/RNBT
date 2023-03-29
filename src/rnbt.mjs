@@ -203,11 +203,11 @@ encoders[TAG_Compound] = function(nbt, depth){
 };
 
 encoders[TAG_Int_Array] = function(nbt){
-    return `i32 ${JSON.stringify([...nbt])}`;
+    return colors.type(typenames[TAG_Int_Array]) + " " + JSON.stringify([...nbt]);
 };
 
 encoders[TAG_Long_Array] = function(nbt){
-    return `i64 ${JSON.stringify([...nbt])}`;
+    return colors.type(typenames[TAG_Long_Array]) + " " + JSON.stringify([...nbt]);
 };
 
 export const encodeRNBT = function(nbt/*:nbtobject*/, _format = true, indent = 2, colorize = false){
