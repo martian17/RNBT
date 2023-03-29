@@ -27,7 +27,7 @@ import {
 import {
     obj_isEmpty,
     escapeObjectKey,
-    getIndent,
+    repeatstr,
     skipSpaces
 } from "./util.mjs";
 
@@ -90,23 +90,36 @@ const _colors = {
 
 const colors = {
     number: function(str){
-        if(!this.colorize)return str;
+        if(!format.colorize)return str;
         return _colors.yellow + str + _colors.reset;
     },
     string: function(str){
-        if(!this.colorize)return str;
+        if(!format.colorize)return str;
         return _colors.green + str + _colors.reset;
     },
     type: function(str){
-        if(!this.colorize)return str;
+        if(!format.colorize)return str;
         return _colors.red + str + _colors.reset;
     },
-    colorize: false
 };
+
+
+const getIndent = (()=>{
+    const cache = new Map;
+    return function(n){
+        if(!format.format)return "";
+        if(!cache.has(n*format.indent)){
+            cache.set(n*format.indent,repeatstr(" ",n));
+        }
+        return cache.get(n*format.indent);
+    }
+})();
+
 
 const format = {
     format:false,
-    indent:2
+    indent:2,
+    colorize: false
 };
 
 
@@ -198,7 +211,7 @@ encoders[TAG_Long_Array] = function(nbt){
 };
 
 export const encodeRNBT = function(nbt/*:nbtobject*/, _format = true, indent = 2, colorize = false){
-    colors.colorize = colorize;
+    format.colorize = colorize;
     format.format = _format;
     format.indent = indent;
     return encoders[getType(nbt)](nbt,0);
