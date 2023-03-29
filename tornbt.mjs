@@ -1,5 +1,5 @@
 import {decodeNBT} from "nbt.js";
-import {encodeRNBT} from "./rnbt.mjs";
+import {encodeRNBT} from "./lib/rnbt.js";
 import zlib from "zlib";
 import {promises as fs} from "fs";
 import util from "util";
@@ -15,5 +15,5 @@ if(!filename){
 const buff = await (fs.readFile(filename));
 const res = await decodeNBT(await gunzip(buff));
 
-console.log(encodeRNBT(res));
+console.log(encodeRNBT(res,true,2,true));
 
