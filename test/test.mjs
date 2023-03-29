@@ -1,5 +1,5 @@
 import {decodeNBT} from "nbt.js";
-import {encodeRNBT, decodeRNBT} from "../rnbt.mjs";
+import {encodeRNBT, decodeRNBT} from "../lib/rnbt.js";
 import zlib from "zlib";
 import {promises as fs} from "fs";
 import util from "util";
