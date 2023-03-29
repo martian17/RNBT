@@ -2,22 +2,32 @@ lockfileVersion: 5.4
 
 specifiers:
   nbt.js: github:martian17/nbt.js
+  typescript: ^5.0.2
 
 dependencies:
-  nbt.js: github.com/martian17/nbt.js/9d995ed0f9427f537d63e6b4f559eb421e078d48
+  nbt.js: github.com/martian17/nbt.js/9a57125ba653266e85d94561463d7f66b16630cd
+
+devDependencies:
+  typescript: 5.0.2
 
 packages:
 
-  github.com/martian17/buffer-builder.js/68ca9fee79178346022d05f478bc8d733cf46a38:
-    resolution: {tarball: https://codeload.github.com/martian17/buffer-builder.js/tar.gz/68ca9fee79178346022d05f478bc8d733cf46a38}
+  /typescript/5.0.2:
+    resolution: {integrity: sha512-wVORMBGO/FAs/++blGNeAVdbNKtIh1rbBL2EyQ1+J9lClJ93KiiKe8PmFIVdXhHcyv44SL9oglmfeSsndo0jRw==}
+    engines: {node: '>=12.20'}
+    hasBin: true
+    dev: true
+
+  github.com/martian17/buffer-builder.js/9c96348c05c1aebfbc4dc427e22e4303b7b719c1:
+    resolution: {tarball: https://codeload.github.com/martian17/buffer-builder.js/tar.gz/9c96348c05c1aebfbc4dc427e22e4303b7b719c1}
     name: buffer-builder.js
     version: 1.0.0
     dev: false
 
-  github.com/martian17/nbt.js/9d995ed0f9427f537d63e6b4f559eb421e078d48:
-    resolution: {tarball: https://codeload.github.com/martian17/nbt.js/tar.gz/9d995ed0f9427f537d63e6b4f559eb421e078d48}
+  github.com/martian17/nbt.js/9a57125ba653266e85d94561463d7f66b16630cd:
+    resolution: {tarball: https://codeload.github.com/martian17/nbt.js/tar.gz/9a57125ba653266e85d94561463d7f66b16630cd}
     name: nbt.js
-    version: 1.0.0
+    version: 1.1.0
     dependencies:
-      buffer-builder.js: github.com/martian17/buffer-builder.js/68ca9fee79178346022d05f478bc8d733cf46a38
+      buffer-builder.js: github.com/martian17/buffer-builder.js/9c96348c05c1aebfbc4dc427e22e4303b7b719c1
     dev: false
