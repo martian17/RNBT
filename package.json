@@ -5,7 +5,7 @@
   "description": "",
   "main": "lib/rnbt.js",
   "scripts": {
-    "test": "node test/test.mjs"
+    "test": "cd test && node test.mjs"
   },
   "keywords": [],
   "author": "",
