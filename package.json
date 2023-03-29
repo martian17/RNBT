@@ -3,7 +3,7 @@
   "type":"module",
   "version": "1.0.0",
   "description": "",
-  "main": "lib/index.js",
+  "main": "lib/rnbt.js",
   "scripts": {
     "test": "node test/test.mjs"
   },
