@@ -5,7 +5,7 @@ specifiers:
   typescript: ^5.0.2
 
 dependencies:
-  nbt.js: github.com/martian17/nbt.js/9a57125ba653266e85d94561463d7f66b16630cd
+  nbt.js: github.com/martian17/nbt.js/e55fbe54a701397b7da07cde0680b7da15a8e786
 
 devDependencies:
   typescript: 5.0.2
@@ -24,8 +24,8 @@ packages:
     version: 1.0.0
     dev: false
 
-  github.com/martian17/nbt.js/9a57125ba653266e85d94561463d7f66b16630cd:
-    resolution: {tarball: https://codeload.github.com/martian17/nbt.js/tar.gz/9a57125ba653266e85d94561463d7f66b16630cd}
+  github.com/martian17/nbt.js/e55fbe54a701397b7da07cde0680b7da15a8e786:
+    resolution: {tarball: https://codeload.github.com/martian17/nbt.js/tar.gz/e55fbe54a701397b7da07cde0680b7da15a8e786}
     name: nbt.js
     version: 1.1.0
     dependencies:

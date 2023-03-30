@@ -1,25 +1,33 @@
 import {
 // enums
-    TAG_End,
-    TAG_Byte,
-    TAG_Short,
-    TAG_Int,
-    TAG_Long,
-    TAG_Float,
-    TAG_Double,
+    TAG_End       ,
+    TAG_Byte      ,
+    TAG_Short     ,
+    TAG_Int       ,
+    TAG_Long      ,
+    TAG_Float     ,
+    TAG_Double    ,
     TAG_Byte_Array,
-    TAG_String,
-    TAG_List,
-    TAG_Compound,
-    TAG_Int_Array,
+    TAG_String    ,
+    TAG_List      ,
+    TAG_Compound  ,
+    TAG_Int_Array ,
     TAG_Long_Array,
 // types
-    NBT_Byte,
-    NBT_Short,
-    NBT_Int,
-    NBT_Long,
-    NBT_Float,
-    NBT_Double,
+    NBT_Object,
+
+    NBT_Byte      ,
+    NBT_Short     ,
+    NBT_Int       ,
+    NBT_Long      ,
+    NBT_Float     ,
+    NBT_Double    ,
+    NBT_Byte_Array,
+    NBT_String    ,
+    NBT_List      ,
+    NBT_Compound  ,
+    NBT_Int_Array ,
+    NBT_Long_Array,
 // funcs
     getType
 } from "nbt.js";
@@ -29,21 +37,21 @@ import {
     escapeObjectKey,
     repeatstr,
     skipSpaces
-} from "./util.mjs";
+} from "./util.js";
 
 
 
 // Global objects
 
-const numberConstructors = [];
-numberConstructors[TAG_Byte] = NBT_Byte;
-numberConstructors[TAG_Short] = NBT_Short;
-numberConstructors[TAG_Int] = NBT_Int;
-numberConstructors[TAG_Long] = NBT_Long;
-numberConstructors[TAG_Float] = NBT_Float;
-numberConstructors[TAG_Double] = NBT_Double;
+const numberConstructors = new Map;
+numberConstructors.set(TAG_Byte  , NBT_Byte);
+numberConstructors.set(TAG_Short , NBT_Short);
+numberConstructors.set(TAG_Int   , NBT_Int);
+numberConstructors.set(TAG_Long  , NBT_Long);
+numberConstructors.set(TAG_Float , NBT_Float);
+numberConstructors.set(TAG_Double, NBT_Double);
 
-const typenames = [];
+const typenames: string[] = [];
 typenames[TAG_End] = "null";
 typenames[TAG_Byte] = "i8";
 typenames[TAG_Short] = "i16";
@@ -58,7 +66,8 @@ typenames[TAG_Compound] = "";
 typenames[TAG_Int_Array] = "i32";
 typenames[TAG_Long_Array] = "i64";
 
-const typenameMap = new Map;
+
+const typenameMap = new Map<string,number>;
 for(let type = TAG_Byte; type <= TAG_Double; type++){
     typenameMap.set(typenames[type],type);
 }
@@ -72,7 +81,6 @@ const _colors = {
     magenta: "\u001b[35m",
     cyan: "\u001b[36m",
     white: "\u001b[37m",
-    reset: "\u001b[0m",
     _black: "\u001b[30;1m",
     _red: "\u001b[31;1m",
     _green: "\u001b[32;1m",
@@ -87,7 +95,7 @@ const _colors = {
 
 
 
-const colors = {
+const colors: Record<string,((str:string) => string)> = {
     number: function(str){
         if(!format.colorize)return str;
         return _colors.yellow + str + _colors.reset;
@@ -105,7 +113,7 @@ const colors = {
 
 const getIndent = (()=>{
     const cache = new Map;
-    return function(n){
+    return function(n: number){
         if(!format.format)return "";
         if(!cache.has(n*format.indent)){
             cache.set(n*format.indent,repeatstr(" ",n));
@@ -130,7 +138,8 @@ const format = {
 
 // Encoder
 
-const encoders = [];
+// I'm aware `any` is bad. This argument will be cast to NBT_Object later
+const encoders: ((nbt: any/*NBT_Object*/, depth: number) => string)[] = [];
 for(let type of [TAG_Byte, TAG_Short, TAG_Int, TAG_Float, TAG_Double]){
     encoders[type] = function(nbt){
         return colors.type(typenames[type]) + " " + colors.number(nbt.value);
@@ -211,7 +220,7 @@ encoders[TAG_Long_Array] = function(nbt){
     return colors.type(typenames[TAG_Long_Array]) + " " + JSON.stringify([...nbt]);
 };
 
-export const encodeRNBT = function(nbt/*:nbtobject*/, _format = true, indent = 2, colorize = false){
+export const encodeRNBT = function(nbt: NBT_Object, _format = true, indent = 2, colorize = false){
     format.colorize = colorize;
     format.format = _format;
     format.indent = indent;
@@ -221,11 +230,12 @@ export const encodeRNBT = function(nbt/*:nbtobject*/, _format = true, indent = 2
 
 
 // Decoder
+type DecoderReturn<T> = [T, string];
 
-const parseCompound = function(str){
+const parseCompound = function(str: string): DecoderReturn<NBT_Compound>{
     str = str.slice(1);// skip "{"
     str = skipSpaces(str);
-    const res = {};
+    const res: NBT_Object = {};
     if(str[0] === "}"){
         str = str.slice(1);
         str = skipSpaces(str);
@@ -234,14 +244,15 @@ const parseCompound = function(str){
     while(true){
         if(str.length === 0)
             throw new Error("Unexpected end of input");
-        let key;
+        let key: string;
         if(str[0] === "\""){
             [key,str] = parseString(str);
         }else{
-            key = str.match(/[A-Za-z_][A-Za-z0-9_]*/)[0];
-            if(key.length === 0){
+            const key_match = str.match(/[A-Za-z_][A-Za-z0-9_]*/);
+            if(key_match === null){
                 throw new Error(`Expected a key, but got ${str[0]} instead.`);
             }
+            key = key_match[0];
             str = str.slice(key.length);
             str = skipSpaces(str);
         }
@@ -272,10 +283,10 @@ const parseCompound = function(str){
     return [res,str];
 };
 
-const parseList = function(str){
+const parseList = function(str: string): DecoderReturn<NBT_List>{
     str = str.slice(1);// skip "["
     str = skipSpaces(str);
-    const res = [];
+    const res: NBT_List = [];
     if(str[0] === "]"){
         str = str.slice(1);
         str = skipSpaces(str);
@@ -304,7 +315,7 @@ const parseList = function(str){
     return [res,str];
 };
 
-const parseString = function(str){
+const parseString = function(str: string): DecoderReturn<NBT_String>{
     let res = "";
     let i = 1;// skip "\""
     for(; i < str.length; i++){
@@ -328,14 +339,17 @@ const parseString = function(str){
     return [JSON.parse("\""+res+"\""),str];
 };
 
-const parseNumberAsString = function(str){
-    const res = str.match(/^[0-9\.\+\-eE]+/)[0];
+const parseNumberAsString = function(str: string): DecoderReturn<string>{
+    const res_match = str.match(/^[0-9\.\+\-eE]+/);
+    if(res_match === null)
+        throw new Error(`Expected number, but got ${str[0]} instead`);
+    const res = res_match[0];
     str = str.slice(res.length);
     str = skipSpaces(str);
     return [res,str];
 };
 
-const parseNumber = function(str,type){
+const parseNumber = function(str: string, type: number): DecoderReturn<NBT_Byte | NBT_Short | NBT_Int | NBT_Long | NBT_Float | NBT_Double> {
     let val;
     [val,str] = parseNumberAsString(str);
     let num;
@@ -346,14 +360,15 @@ const parseNumber = function(str,type){
     }else{
         num = parseInt(val);
     }
-    const res = new numberConstructors[type](num);
+    // @ts-ignore
+    const res = new (numberConstructors.get(type))(num);
     return [res,str];
 };
 
-const parseNumberArray = function(str){
+const parseNumberArray = function(str: string): DecoderReturn<string[]>{
     str = str.slice(1);
     str = skipSpaces(str);
-    const res = [];
+    const res:string[] = [];
     if(str[0] === "]"){
         str = str.slice(1);
         str = skipSpaces(str);
@@ -382,7 +397,7 @@ const parseNumberArray = function(str){
     return [res,str];
 };
 
-const parseByteArray = function(str){
+const parseByteArray = function(str: string): DecoderReturn<NBT_Byte_Array>{
     let arr;
     [arr,str] = parseNumberArray(str);
     const res = new Int8Array(arr.length);
@@ -392,7 +407,7 @@ const parseByteArray = function(str){
     return [res,str];
 };
 
-const parseIntArray = function(str){
+const parseIntArray = function(str: string): DecoderReturn<NBT_Int_Array>{
     let arr;
     [arr,str] = parseNumberArray(str);
     const res = new Int32Array(arr.length);
@@ -402,7 +417,7 @@ const parseIntArray = function(str){
     return [res,str];
 };
 
-const parseLongArray = function(str){
+const parseLongArray = function(str: string): DecoderReturn<NBT_Long_Array>{
     let arr;
     [arr,str] = parseNumberArray(str);
     const res = new BigInt64Array(arr.length);
@@ -413,7 +428,7 @@ const parseLongArray = function(str){
 };
 
 
-const parseRNBT = function(str){// str contains sliced string
+const parseRNBT = function(str: string): DecoderReturn<NBT_Object>{
     if(str.length === 0)
         throw new Error("Unexpected end of input");
     str = skipSpaces(str);
@@ -425,8 +440,8 @@ const parseRNBT = function(str){// str contains sliced string
         return parseString(str);
     
     // Extract the typename
-    const typename = str.match(/^[^\s]+/)[0];
-    if(!typename){
+    const typename_match = str.match(/^[^\s]+/);
+    if(typename_match === null){
         if(str.length !== 0){
             // Shouldn't happen, but just in case
             throw new Error(`Expected typename, but got ${str[0]} instead.`);
@@ -434,6 +449,7 @@ const parseRNBT = function(str){// str contains sliced string
             throw new Error("Unexpected end of input");
         }
     }
+    const typename = typename_match[0];
     if(!typenameMap.has(typename))
         throw new Error(`Expected a valid typename, but got ${typename.slice(0,10)} instead.`);
     str = str.slice(typename.length);
@@ -450,10 +466,11 @@ const parseRNBT = function(str){// str contains sliced string
         throw new Error(`${typename} typed array is not supported by NBT.`);
     }
     // It's a plain old number
-    return parseNumber(str,typenameMap.get(typename));
+    // Typescript thinks it may be undefined, but it's cehcked at line 461
+    return parseNumber(str,typenameMap.get(typename) as number);
 };
 
-export const decodeRNBT = function(str)/*:nbtobject*/{
+export const decodeRNBT = function(str: string): NBT_Object{
     str = skipSpaces(str);
     let res;
     [res,str] = parseRNBT(str);
