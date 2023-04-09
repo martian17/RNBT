@@ -213,11 +213,11 @@ encoders[TAG_Compound] = function(nbt, depth){
 };
 
 encoders[TAG_Int_Array] = function(nbt){
-    return colors.type(typenames[TAG_Int_Array]) + " " + JSON.stringify([...nbt]);
+    return colors.type(typenames[TAG_Int_Array]) + " " + colors.number(JSON.stringify([...nbt]));
 };
 
 encoders[TAG_Long_Array] = function(nbt){
-    return colors.type(typenames[TAG_Long_Array]) + " [" + [...nbt].map(v=>v+"").join(", ")+"]";
+    return colors.type(typenames[TAG_Long_Array]) + " "+ colors.number("[" + [...nbt].map(v=>v+"").join(", ") + "]");
 };
 
 export const encodeRNBT = function(nbt: NBT_Object, _format = true, indent = 2, colorize = false){
