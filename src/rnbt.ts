@@ -116,7 +116,7 @@ const getIndent = (()=>{
     return function(n: number){
         if(!format.format)return "";
         if(!cache.has(n*format.indent)){
-            cache.set(n*format.indent,repeatstr(" ",n));
+            cache.set(n*format.indent,repeatstr(" ",n*format.indent));
         }
         return cache.get(n*format.indent);
     }
